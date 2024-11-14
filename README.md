@@ -90,6 +90,10 @@ http://localhost:5000
    - View final results when training completes
    - Compare model predictions on test samples
 
+## Sample Output
+
+![Sample Output](./sample_output.png)
+
 ## Project Structure
 ```
 .
