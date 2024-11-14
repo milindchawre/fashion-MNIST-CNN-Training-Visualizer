@@ -1,0 +1,1 @@
+{"training_losses": [2.3277743780282516, 2.3220620061288764], "validation_losses": [2.3069550171019926, 2.309924452168167], "training_accuracy": [10.081666666666667, 10.023333333333333], "test_accuracy": [10.0, 10.0], "current_epoch": 1, "current_batch": -1, "status": "Completed"}
