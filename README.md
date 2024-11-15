@@ -16,10 +16,18 @@ This project implements a comparative study of two Convolutional Neural Networks
 
 ### Real-time Visualization
 - Live training progress for both models
+- Progress bar showing current training epoch
 - Combined loss curves (training and test)
 - Combined accuracy curves (training and test)
 - Side-by-side final results comparison
-- Visual prediction results on test samples
+- Visual prediction results on test samples with high-quality image rendering
+
+### User Interface Features
+- Interactive configuration controls
+- Auto-disabled training button during active training
+- Clear progress indication with progress bar
+- High-quality 224x224 prediction images with enhanced contrast
+- Color-coded prediction results (green for correct, red for incorrect)
 
 ### Technical Features
 - CUDA support for GPU acceleration
@@ -91,7 +99,6 @@ http://localhost:5000
    - Compare model predictions on test samples
 
 ## Sample Output
-
 ![Sample Output](./sample_output.png)
 
 ## Project Structure

@@ -89,7 +89,7 @@ def results(model_id):
                 'pred': int(s['pred']),
                 'true_label': s['true_label'],
                 'pred_label': s['pred_label'],
-                'image': s['image'].tolist()
+                'image': s['image']
             } for s in samples]
         })
     except FileNotFoundError:

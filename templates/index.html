@@ -33,6 +33,14 @@
             padding: 10px;
             background-color: #f8f8f8;
             border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result-item img {
+            display: block;
+            margin: 0 auto;
+            border-radius: 5px;
+            image-rendering: auto;
+            filter: contrast(1.2);
         }
         canvas {
             border: 1px solid #ddd;
@@ -123,6 +131,37 @@
         
         button:hover {
             background-color: #34495e;
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+            display: none;  /* Hidden by default */
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -241,7 +280,17 @@
         
         <!-- Single button for both models -->
         <div class="train-button-container" style="text-align: center; margin: 20px 0;">
-            <button onclick="startTrainingBoth()" style="font-size: 1.2em; padding: 15px 30px;">Train Models</button>
+            <button id="train-button" onclick="startTrainingBoth()" style="font-size: 1.2em; padding: 15px 30px;">Train Models</button>
+        </div>
+        
+        <!-- Progress bar - moved here -->
+        <div class="progress-container" id="training-progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="training-progress-fill"></div>
+            </div>
+            <div class="progress-text" id="training-progress-text">
+                Initializing training...
+            </div>
         </div>
         
         <!-- Combined Progress Section -->
@@ -322,7 +371,27 @@
             });
         }
 
+        function updateProgressBar(progress, totalEpochs) {
+            const progressFill = document.getElementById('training-progress-fill');
+            const progressText = document.getElementById('training-progress-text');
+            const percentage = (progress / totalEpochs) * 100;
+            
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `Training Progress: Epoch ${progress} of ${totalEpochs}`;
+        }
+
         function startTrainingBoth() {
+            // Disable the button
+            const trainButton = document.getElementById('train-button');
+            trainButton.disabled = true;
+            
+            // Show progress container
+            const progressContainer = document.getElementById('training-progress-container');
+            progressContainer.style.display = 'block';
+            
+            // Get the maximum epochs from either model (they should be the same)
+            const totalEpochs = parseInt(document.getElementById('model1-epochs').value);
+            
             // Start both models
             const configs = ['model1', 'model2'].map(modelId => ({
                 model_id: modelId,
@@ -335,7 +404,6 @@
                 epochs: parseInt(document.getElementById(`${modelId}-epochs`).value)
             }));
 
-            // Start both models
             Promise.all(configs.map(config => 
                 fetch('/start_training', {
                     method: 'POST',
@@ -346,18 +414,29 @@
                 }).then(response => response.json())
             )).then(responses => {
                 if (responses.every(r => r.status === 'success')) {
-                    updateProgressBoth();
+                    updateProgressBoth(totalEpochs);
                 } else {
                     alert('Error starting one or both models');
+                    trainButton.disabled = false;
+                    progressContainer.style.display = 'none';
                 }
             });
         }
 
-        function updateProgressBoth() {
+        function updateProgressBoth(totalEpochs) {
             Promise.all([
                 fetch('/progress/model1').then(r => r.json()),
                 fetch('/progress/model2').then(r => r.json())
             ]).then(([data1, data2]) => {
+                // Get the minimum epoch between both models
+                const currentEpoch = Math.min(
+                    data1.current_epoch + 1,
+                    data2.current_epoch + 1
+                );
+                
+                // Update progress bar
+                updateProgressBar(currentEpoch, totalEpochs);
+                
                 // Update combined loss plot
                 const traces = [
                     {
@@ -429,9 +508,15 @@
 
                 // Check if training is completed for both models
                 if (data1.status === 'Completed' && data2.status === 'Completed') {
+                    // Re-enable the train button
+                    document.getElementById('train-button').disabled = false;
+                    // Hide progress bar after a short delay
+                    setTimeout(() => {
+                        document.getElementById('training-progress-container').style.display = 'none';
+                    }, 1000);
                     loadResults();
                 } else {
-                    setTimeout(updateProgressBoth, 1000);
+                    setTimeout(() => updateProgressBoth(totalEpochs), 1000);
                 }
             });
         }
@@ -481,27 +566,13 @@
                     const div = document.createElement('div');
                     div.className = 'result-item';
                     
-                    // Create and setup canvas
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 140;
-                    canvas.height = 140;
-                    const ctx = canvas.getContext('2d');
-                    ctx.scale(5, 5);
-                    
-                    const imageData = ctx.createImageData(28, 28);
-                    for (let i = 0; i < 28; i++) {
-                        for (let j = 0; j < 28; j++) {
-                            const value = (1 - sample1.image[i][j]) * 255;
-                            const idx = (i * 28 + j) * 4;
-                            imageData.data[idx] = value;
-                            imageData.data[idx + 1] = value;
-                            imageData.data[idx + 2] = value;
-                            imageData.data[idx + 3] = 255;
-                        }
-                    }
-                    
-                    ctx.putImageData(imageData, 0, 0);
-                    div.appendChild(canvas);
+                    // Create and display image using base64 string
+                    const img = document.createElement('img');
+                    img.src = `data:image/png;base64,${sample1.image}`;
+                    img.width = 224;
+                    img.height = 224;
+                    img.style.imageRendering = 'auto';
+                    div.appendChild(img);
                     
                     const isCorrect1 = sample1.true === sample1.pred;
                     const isCorrect2 = sample2.true === sample2.pred;

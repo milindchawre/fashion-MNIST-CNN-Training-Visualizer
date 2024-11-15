@@ -7,6 +7,9 @@ import os
 import numpy as np
 from tqdm import tqdm
 import logging
+from PIL import Image
+import io
+import base64
 
 # Set up logging
 logging.basicConfig(
@@ -199,9 +202,20 @@ def train_model(model_id, config):
         pred = output.argmax(dim=1)
         
         for i in range(10):
-            img = data[i].squeeze().cpu().numpy()
+            # Convert tensor to PIL Image
+            img_array = data[i].squeeze().cpu().numpy()
+            # Scale to 0-255 range and invert colors for better visibility
+            img_array = ((1 - img_array) * 255).astype(np.uint8)
+            # Resize image to be larger (224x224)
+            img = Image.fromarray(img_array).resize((224, 224), Image.Resampling.LANCZOS)
+            
+            # Convert PIL image to base64 string
+            buffered = io.BytesIO()
+            img.save(buffered, format="PNG", quality=95)  # Increased quality
+            img_str = base64.b64encode(buffered.getvalue()).decode()
+            
             test_samples.append({
-                'image': img,
+                'image': img_str,  # Save base64 string instead of numpy array
                 'true': target[i].item(),
                 'true_label': fashion_mnist_labels[target[i].item()],
                 'pred': pred[i].item(),

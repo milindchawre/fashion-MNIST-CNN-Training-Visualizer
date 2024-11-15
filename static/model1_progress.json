@@ -1,1 +1,1 @@
-{"training_losses": [1.0786797678947448, 0.6925102819919586], "validation_losses": [0.7594820544833228, 0.6056909263134003], "training_accuracy": [58.806666666666665, 74.0], "test_accuracy": [71.14, 76.96], "current_epoch": 1, "current_batch": -1, "status": "Completed"}
+{"training_losses": [1.1178055352210998, 0.7437974059581757], "validation_losses": [0.7658334459577288, 0.6571308294932048], "training_accuracy": [57.446666666666665, 72.24666666666667], "test_accuracy": [71.32, 74.93], "current_epoch": 1, "current_batch": -1, "status": "Completed"}
